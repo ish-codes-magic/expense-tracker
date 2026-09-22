@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../theme/phosphor.dart';
 
 import '../theme/nocturne.dart';
 
@@ -19,7 +19,7 @@ void showToast(String message) {
         side: const BorderSide(color: Noc.n700),
       ),
       content: Row(children: [
-        const Icon(PhosphorIconsFill.checkCircle, color: Noc.accent, size: 18),
+        const Icon(PhFill.checkCircle, color: Noc.accent, size: 18),
         const SizedBox(width: 10),
         Expanded(child: Text(message, style: const TextStyle(color: Noc.text, fontSize: 13))),
       ]),
@@ -324,7 +324,7 @@ class ScreenHeader extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8),
       child: Row(children: [
         if (onBack != null) ...[
-          CircleIconButton(icon: PhosphorIconsRegular.arrowLeft, onPressed: onBack, tooltip: 'Back'),
+          CircleIconButton(icon: Ph.arrowLeft, onPressed: onBack, tooltip: 'Back'),
           const SizedBox(width: 10),
         ],
         Expanded(

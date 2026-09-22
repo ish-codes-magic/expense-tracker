@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../theme/phosphor.dart';
 
 import '../theme/nocturne.dart';
 import 'nocturne_widgets.dart';
@@ -34,11 +34,11 @@ class AppShell extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                _tab(context, '/', 'Home', PhosphorIconsRegular.house),
-                _tab(context, '/activity', 'Activity', PhosphorIconsRegular.listBullets),
+                _tab(context, '/', 'Home', Ph.house),
+                _tab(context, '/activity', 'Activity', Ph.listBullets),
                 Expanded(child: _ScanTab(onTap: () => context.push('/processing'))),
-                _tab(context, '/insights', 'Insights', PhosphorIconsRegular.chartBar),
-                _tab(context, '/settings', 'Settings', PhosphorIconsRegular.gear),
+                _tab(context, '/insights', 'Insights', Ph.chartBar),
+                _tab(context, '/settings', 'Settings', Ph.gear),
               ]),
             ),
           ]),
@@ -89,7 +89,7 @@ class _ScanTab extends StatelessWidget {
               border: Border.all(color: Noc.accent),
               boxShadow: [BoxShadow(color: Noc.accent.withValues(alpha: 0.3), blurRadius: 16)],
             ),
-            child: const Icon(PhosphorIconsRegular.camera, size: 22, color: Noc.accent),
+            child: const Icon(Ph.camera, size: 22, color: Noc.accent),
           ),
           const SizedBox(height: 3),
           const Text('Scan', style: TextStyle(fontSize: 10.5, color: Noc.accent)),

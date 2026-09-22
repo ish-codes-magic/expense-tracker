@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../theme/phosphor.dart';
 
 class Category {
   const Category({
@@ -16,12 +16,12 @@ class Category {
 }
 
 final categories = <Category>[
-  Category(id: 'food', name: 'Food & drink', icon: PhosphorIconsRegular.coffee, monthlyLimitPaise: 600000),
-  Category(id: 'groceries', name: 'Groceries', icon: PhosphorIconsRegular.shoppingCart, monthlyLimitPaise: 800000),
-  Category(id: 'transport', name: 'Transport', icon: PhosphorIconsRegular.car, monthlyLimitPaise: 300000),
-  Category(id: 'shopping', name: 'Shopping', icon: PhosphorIconsRegular.shoppingBag, monthlyLimitPaise: 500000),
-  Category(id: 'utilities', name: 'Utilities', icon: PhosphorIconsRegular.lightning, monthlyLimitPaise: 500000),
-  Category(id: 'health', name: 'Health', icon: PhosphorIconsRegular.firstAid, monthlyLimitPaise: 200000),
+  Category(id: 'food', name: 'Food & drink', icon: Ph.coffee, monthlyLimitPaise: 600000),
+  Category(id: 'groceries', name: 'Groceries', icon: Ph.shoppingCart, monthlyLimitPaise: 800000),
+  Category(id: 'transport', name: 'Transport', icon: Ph.car, monthlyLimitPaise: 300000),
+  Category(id: 'shopping', name: 'Shopping', icon: Ph.shoppingBag, monthlyLimitPaise: 500000),
+  Category(id: 'utilities', name: 'Utilities', icon: Ph.lightning, monthlyLimitPaise: 500000),
+  Category(id: 'health', name: 'Health', icon: Ph.firstAid, monthlyLimitPaise: 200000),
 ];
 
 Category categoryById(String id) =>
