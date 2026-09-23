@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/home_screen.dart';
 import 'features/not_built_yet_screen.dart';
+import 'features/receipt_detail_screen.dart';
 import 'widgets/app_shell.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
@@ -42,7 +43,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/receipt/:id',
-          builder: (context, state) => const NotBuiltYetScreen(title: 'Receipt', showBack: true),
+          builder: (context, state) => ReceiptDetailScreen(id: state.pathParameters['id']!),
         ),
       ],
     ),
