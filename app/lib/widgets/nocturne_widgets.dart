@@ -5,7 +5,7 @@ import '../theme/nocturne.dart';
 
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
 
-void showToast(String message) {
+void showToast(String message, {IconData icon = PhFill.checkCircle}) {
   messengerKey.currentState
     ?..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
@@ -19,7 +19,7 @@ void showToast(String message) {
         side: const BorderSide(color: Noc.n700),
       ),
       content: Row(children: [
-        const Icon(PhFill.checkCircle, color: Noc.accent, size: 18),
+        Icon(icon, color: Noc.accent, size: 18),
         const SizedBox(width: 10),
         Expanded(child: Text(message, style: const TextStyle(color: Noc.text, fontSize: 13))),
       ]),

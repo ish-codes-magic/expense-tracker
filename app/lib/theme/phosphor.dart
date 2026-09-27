@@ -37,6 +37,7 @@ abstract final class Ph {
   static const uploadSimple = IconData(0xe4c0, fontFamily: 'Phosphor');
   static const user = IconData(0xe4c2, fontFamily: 'Phosphor');
   static const wallet = IconData(0xe68a, fontFamily: 'Phosphor');
+  static const warningCircle = IconData(0xe4e2, fontFamily: 'Phosphor');
   static const x = IconData(0xe4f6, fontFamily: 'Phosphor');
 }
 

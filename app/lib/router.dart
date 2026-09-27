@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/activity_screen.dart';
 import 'features/budgets_screen.dart';
+import 'features/gst_screen.dart';
 import 'features/home_screen.dart';
 import 'features/not_built_yet_screen.dart';
 import 'features/receipt_detail_screen.dart';
@@ -41,7 +42,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/gst',
-          builder: (context, state) => const NotBuiltYetScreen(title: 'GST paid', showBack: true),
+          builder: (context, state) => const GstScreen(),
         ),
         GoRoute(
           path: '/receipt/:id',
