@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'features/activity_screen.dart';
+import 'features/budgets_screen.dart';
 import 'features/home_screen.dart';
 import 'features/not_built_yet_screen.dart';
 import 'features/receipt_detail_screen.dart';
@@ -23,7 +25,7 @@ final router = GoRouter(
         GoRoute(path: '/', pageBuilder: (context, state) => _tabPage(const HomeScreen())),
         GoRoute(
           path: '/activity',
-          pageBuilder: (context, state) => _tabPage(const NotBuiltYetScreen(title: 'Activity')),
+          pageBuilder: (context, state) => _tabPage(const ActivityScreen()),
         ),
         GoRoute(
           path: '/insights',
@@ -35,7 +37,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/budgets',
-          builder: (context, state) => const NotBuiltYetScreen(title: 'Budgets', showBack: true),
+          builder: (context, state) => const BudgetsScreen(),
         ),
         GoRoute(
           path: '/gst',

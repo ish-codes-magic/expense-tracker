@@ -5,20 +5,17 @@ class AppSettings {
     this.showGst = true,
     this.autoCategorise = true,
     this.appLock = false,
-    this.monthlyBudgetPaise = 2900000,
   });
 
   final bool showGst;
   final bool autoCategorise;
   final bool appLock;
-  final int monthlyBudgetPaise;
 
-  AppSettings copyWith({bool? showGst, bool? autoCategorise, bool? appLock, int? monthlyBudgetPaise}) =>
+  AppSettings copyWith({bool? showGst, bool? autoCategorise, bool? appLock}) =>
       AppSettings(
         showGst: showGst ?? this.showGst,
         autoCategorise: autoCategorise ?? this.autoCategorise,
         appLock: appLock ?? this.appLock,
-        monthlyBudgetPaise: monthlyBudgetPaise ?? this.monthlyBudgetPaise,
       );
 }
 

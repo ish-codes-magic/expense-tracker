@@ -18,3 +18,6 @@ Map<String, int> spendByCategory(Iterable<Receipt> receipts) {
   }
   return totals;
 }
+
+/// A budget counts as near its limit from 90% spent; a zero limit means "no budget".
+bool isNearLimit(int spentPaise, int limitPaise) => limitPaise > 0 && spentPaise >= limitPaise * 0.9;

@@ -6,6 +6,7 @@ import '../theme/phosphor.dart';
 import '../core/format.dart';
 import '../core/spending.dart';
 import '../data/categories.dart';
+import '../state/budgets.dart';
 import '../state/receipts.dart';
 import '../state/settings.dart';
 import '../theme/nocturne.dart';
@@ -19,15 +20,16 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final receipts = ref.watch(receiptsProvider);
     final settings = ref.watch(settingsProvider);
+    final limits = ref.watch(budgetsProvider);
     final today = dateOnly(DateTime.now());
 
     final thisMonth = inMonth(receipts, today).toList();
     final spent = totalOf(thisMonth);
-    final budget = settings.monthlyBudgetPaise;
+    final budget = totalBudget(limits);
     final left = budget - spent;
     final byCategory = spendByCategory(thisMonth);
     final nearLimit = categories
-        .where((c) => (byCategory[c.id] ?? 0) >= c.monthlyLimitPaise * 0.9)
+        .where((c) => isNearLimit(byCategory[c.id] ?? 0, limits[c.id] ?? 0))
         .length;
     final financialYearGst = gstOf(sinceDate(receipts, financialYearStart(today)));
     final recent = receipts.take(4).toList();
