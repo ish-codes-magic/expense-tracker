@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'database.dart';
+
 class AppSettings {
   const AppSettings({
     this.showGst = true,
@@ -23,9 +25,14 @@ final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(Setting
 
 class SettingsNotifier extends Notifier<AppSettings> {
   @override
-  AppSettings build() => const AppSettings();
+  AppSettings build() => ref.read(startupDataProvider).settings;
 
-  void toggleShowGst() => state = state.copyWith(showGst: !state.showGst);
-  void toggleAutoCategorise() => state = state.copyWith(autoCategorise: !state.autoCategorise);
-  void toggleAppLock() => state = state.copyWith(appLock: !state.appLock);
+  Future<void> setShowGst(bool value) => _save(state.copyWith(showGst: value));
+
+  Future<void> setAutoCategorise(bool value) => _save(state.copyWith(autoCategorise: value));
+
+  Future<void> _save(AppSettings next) async {
+    await ref.read(slipDatabaseProvider).saveSettings(next);
+    state = next;
+  }
 }

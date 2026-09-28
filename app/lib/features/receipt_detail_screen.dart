@@ -159,9 +159,11 @@ class ReceiptDetailScreen extends ConsumerWidget {
     );
 
     if (confirmed != true || !context.mounted) return;
+    final receipts = ref.read(receiptsProvider.notifier);
     context.pop();
-    ref.read(receiptsProvider.notifier).remove(receipt.id);
-    showToast('Receipt deleted');
+    if (await attempt(() => receipts.remove(receipt.id), failure: "Couldn't delete the receipt")) {
+      showToast('Receipt deleted');
+    }
   }
 }
 

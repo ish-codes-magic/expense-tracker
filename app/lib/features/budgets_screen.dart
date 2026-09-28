@@ -70,8 +70,10 @@ class BudgetsScreen extends ConsumerWidget {
       builder: (context) => _BudgetEditor(limits: ref.read(budgetsProvider)),
     );
     if (updated == null) return;
-    ref.read(budgetsProvider.notifier).setLimits(updated);
-    showToast('Budgets updated');
+    if (await attempt(() => ref.read(budgetsProvider.notifier).setLimits(updated),
+        failure: "Couldn't save the budgets")) {
+      showToast('Budgets updated');
+    }
   }
 }
 

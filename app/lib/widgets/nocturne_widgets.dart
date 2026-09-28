@@ -26,6 +26,18 @@ void showToast(String message, {IconData icon = PhFill.checkCircle}) {
     ));
 }
 
+/// Runs a save or delete. If it throws, shows [failure] with the reason and
+/// returns false, so the caller can stay where it is.
+Future<bool> attempt(Future<void> Function() action, {required String failure}) async {
+  try {
+    await action();
+    return true;
+  } catch (error) {
+    showToast('$failure: $error', icon: Ph.warningCircle);
+    return false;
+  }
+}
+
 /// A 1px rule that fades out over 48px at each end — a Nocturne signature.
 class FadeRule extends StatelessWidget {
   const FadeRule({super.key});

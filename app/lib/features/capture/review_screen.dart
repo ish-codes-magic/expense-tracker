@@ -358,7 +358,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     if (picked != null) setState(() => _date = dateOnly(picked));
   }
 
-  void _save() {
+  Future<void> _save() async {
     final draft = _current;
     final total = draft.totalPaise;
     if (draft.merchant.trim().isEmpty) {
@@ -386,7 +386,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       imagePath: draft.imagePath,
       createdAt: DateTime.now(),
     );
-    ref.read(receiptsProvider.notifier).add(receipt);
+    final saved = await attempt(() => ref.read(receiptsProvider.notifier).add(receipt),
+        failure: "Couldn't save the receipt");
+    if (!saved || !mounted) return;
     ref.read(draftProvider.notifier).clear();
     context.go('/');
     showToast('Saved ${inr(total)} to ${categoryById(draft.categoryId).name}');
