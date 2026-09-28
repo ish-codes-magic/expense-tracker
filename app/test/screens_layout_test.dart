@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:slip/features/activity_screen.dart';
 import 'package:slip/features/budgets_screen.dart';
+import 'package:slip/features/capture/processing_screen.dart';
+import 'package:slip/features/capture/review_screen.dart';
 import 'package:slip/features/gst_screen.dart';
 import 'package:slip/features/home_screen.dart';
 import 'package:slip/features/insights_screen.dart';
@@ -20,6 +22,8 @@ void main() {
     'GST summary': const GstScreen(),
     'Insights': const InsightsScreen(),
     'Settings': const SettingsScreen(),
+    'Processing': const ProcessingScreen(),
+    'Review': const ReviewScreen(),
   };
 
   for (final textScale in [1.0, 1.3]) {

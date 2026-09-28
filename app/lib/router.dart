@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/activity_screen.dart';
+import 'features/capture/processing_screen.dart';
+import 'features/capture/review_screen.dart';
 import 'features/budgets_screen.dart';
 import 'features/gst_screen.dart';
 import 'features/home_screen.dart';
 import 'features/insights_screen.dart';
-import 'features/not_built_yet_screen.dart';
 import 'features/receipt_detail_screen.dart';
 import 'features/settings_screen.dart';
 import 'widgets/app_shell.dart';
@@ -16,7 +17,6 @@ final _shellKey = GlobalKey<NavigatorState>();
 
 NoTransitionPage<void> _tabPage(Widget child) => NoTransitionPage(child: child);
 
-/// Screens are added here as they are built; the rest show a placeholder.
 final router = GoRouter(
   navigatorKey: _rootKey,
   initialLocation: '/',
@@ -55,7 +55,12 @@ final router = GoRouter(
     GoRoute(
       path: '/processing',
       parentNavigatorKey: _rootKey,
-      builder: (context, state) => const NotBuiltYetScreen(title: 'Scan', showBack: true),
+      builder: (context, state) => const ProcessingScreen(),
+    ),
+    GoRoute(
+      path: '/review',
+      parentNavigatorKey: _rootKey,
+      builder: (context, state) => const ReviewScreen(),
     ),
   ],
 );

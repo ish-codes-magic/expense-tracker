@@ -177,7 +177,15 @@ class NocChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[Icon(icon, size: 14, color: color), const SizedBox(width: 6)],
-              Text(label, style: TextStyle(color: color, fontSize: 12.5)),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(color: color, fontSize: 12.5),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),
