@@ -62,8 +62,8 @@ void main() {
     });
   });
 
-  test('gstCsv writes a header, rupee amounts and quotes awkward names', () {
-    final lines = gstCsv([_receipt(merchant: 'Chai, "Point"')]).split('\r\n');
+  test('receiptsCsv writes a header, rupee amounts and quotes awkward names', () {
+    final lines = receiptsCsv([_receipt(merchant: 'Chai, "Point"')]).split('\r\n');
     expect(lines, hasLength(2));
     expect(lines[0], startsWith('Date,Merchant,GSTIN'));
     expect(lines[1],

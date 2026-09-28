@@ -341,3 +341,43 @@ class ScreenHeader extends StatelessWidget {
     );
   }
 }
+
+/// The design's on/off switch: an outlined pill whose knob slides and takes
+/// the accent when on.
+class NocToggle extends StatelessWidget {
+  const NocToggle({super.key, required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const duration = Duration(milliseconds: 150);
+    return Semantics(
+      toggled: value,
+      child: GestureDetector(
+        onTap: () => onChanged(!value),
+        child: AnimatedContainer(
+          duration: duration,
+          width: 38,
+          height: 22,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: value ? Noc.accent : Noc.divider),
+            color: value ? Noc.accent.withValues(alpha: 0.18) : Colors.transparent,
+          ),
+          child: AnimatedAlign(
+            duration: duration,
+            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: value ? Noc.accent : Noc.n500),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

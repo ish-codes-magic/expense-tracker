@@ -7,6 +7,7 @@ import 'package:slip/features/gst_screen.dart';
 import 'package:slip/features/home_screen.dart';
 import 'package:slip/features/insights_screen.dart';
 import 'package:slip/features/receipt_detail_screen.dart';
+import 'package:slip/features/settings_screen.dart';
 
 /// Lays out every screen on a narrow phone with large system text and fails on
 /// any overflow. The window is tall so list items below the fold are built too.
@@ -18,6 +19,7 @@ void main() {
     'Budgets': const BudgetsScreen(),
     'GST summary': const GstScreen(),
     'Insights': const InsightsScreen(),
+    'Settings': const SettingsScreen(),
   };
 
   for (final textScale in [1.0, 1.3]) {

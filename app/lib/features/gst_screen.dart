@@ -1,15 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../core/format.dart';
 import '../core/gst_export.dart';
 import '../core/spending.dart';
 import '../data/models.dart';
+import '../services/share_csv.dart';
 import '../state/receipts.dart';
 import '../theme/nocturne.dart';
 import '../theme/phosphor.dart';
@@ -163,20 +160,14 @@ class _GstScreenState extends ConsumerState<GstScreen> {
 
   static String _yearMonth(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}';
 
-  /// Writes the CSV to the app's temporary folder and opens Android's share
-  /// sheet, so it can go to Drive, email, WhatsApp or Files.
   Future<void> _export(List<Receipt> receipts, String periodLabel, String fileSuffix) async {
     setState(() => _exporting = true);
     try {
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/slip-gst-$fileSuffix.csv');
-      // The byte-order mark tells Excel the file is UTF-8, so ₹ and Hindi names survive.
-      await file.writeAsString(String.fromCharCode(0xFEFF) + gstCsv(receipts));
-      await SharePlus.instance.share(ShareParams(
-        files: [XFile(file.path, mimeType: 'text/csv')],
+      await shareReceiptsCsv(
+        receipts,
+        fileName: 'slip-gst-$fileSuffix.csv',
         subject: 'GST paid · $periodLabel',
-        title: 'Export GST',
-      ));
+      );
     } catch (error) {
       showToast("Couldn't export: $error", icon: Ph.warningCircle);
     } finally {

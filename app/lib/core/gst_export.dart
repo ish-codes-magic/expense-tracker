@@ -18,7 +18,7 @@ String gstRateLabel(int? rate) => rate == null ? 'Mixed' : '$rate%';
 
 /// One row per receipt, amounts in rupees with two decimals, dates as
 /// yyyy-mm-dd so spreadsheets sort them correctly.
-String gstCsv(Iterable<Receipt> receipts) {
+String receiptsCsv(Iterable<Receipt> receipts) {
   final rows = <List<String>>[
     ['Date', 'Merchant', 'GSTIN', 'Category', 'Paid via', 'GST rate',
      'Before tax', 'CGST', 'SGST', 'IGST', 'GST', 'Total'],

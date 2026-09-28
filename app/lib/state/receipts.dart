@@ -14,6 +14,8 @@ class ReceiptsNotifier extends Notifier<List<Receipt>> {
 
   void remove(String id) => state = state.where((r) => r.id != id).toList();
 
+  void clear() => state = const [];
+
   static List<Receipt> _sorted(List<Receipt> receipts) => [...receipts]
     ..sort((a, b) {
       final byDate = b.date.compareTo(a.date);

@@ -8,6 +8,7 @@ import 'features/home_screen.dart';
 import 'features/insights_screen.dart';
 import 'features/not_built_yet_screen.dart';
 import 'features/receipt_detail_screen.dart';
+import 'features/settings_screen.dart';
 import 'widgets/app_shell.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
@@ -35,7 +36,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/settings',
-          pageBuilder: (context, state) => _tabPage(const NotBuiltYetScreen(title: 'Settings')),
+          pageBuilder: (context, state) => _tabPage(const SettingsScreen()),
         ),
         GoRoute(
           path: '/budgets',
