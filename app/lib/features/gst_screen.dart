@@ -98,8 +98,7 @@ class _GstScreenState extends ConsumerState<GstScreen> {
           Text(
             inr(total, withPaise: true),
             style: const TextStyle(
-                fontSize: 40, fontWeight: FontWeight.w500, letterSpacing: -0.8, height: 1.1,
-                fontFeatures: Noc.tabular),
+                fontSize: 40, fontWeight: FontWeight.w500, letterSpacing: -0.8, height: 1.1),
           ),
           const SizedBox(height: 4),
           Text(
@@ -172,7 +171,7 @@ class _GstScreenState extends ConsumerState<GstScreen> {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/slip-gst-$fileSuffix.csv');
       // The byte-order mark tells Excel the file is UTF-8, so ₹ and Hindi names survive.
-      await file.writeAsString('﻿${gstCsv(receipts)}');
+      await file.writeAsString(String.fromCharCode(0xFEFF) + gstCsv(receipts));
       await SharePlus.instance.share(ShareParams(
         files: [XFile(file.path, mimeType: 'text/csv')],
         subject: 'GST paid · $periodLabel',

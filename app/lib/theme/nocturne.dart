@@ -34,6 +34,19 @@ abstract final class Noc {
   static const radiusLg = 14.0;
 
   static const tabular = [FontFeature.tabularFigures()];
+
+  /// Categorical chart colours, checked for colour-blind separation against
+  /// [bg]. Neighbouring slots are always distinguishable; slots 0 and 5, and
+  /// 2 and 4, are not, so charts draw categories in slot order (see
+  /// Category.chartSlot) to keep those pairs apart.
+  static const chartSlots = [
+    Color(0xFF9085E9), // violet
+    Color(0xFFD95926), // orange
+    Color(0xFF199E70), // aqua
+    Color(0xFFC98500), // yellow
+    Color(0xFFD55181), // magenta
+    Color(0xFF3987E5), // blue
+  ];
 }
 
 ThemeData buildNocturneTheme() {

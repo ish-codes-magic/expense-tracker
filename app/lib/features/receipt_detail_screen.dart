@@ -69,11 +69,7 @@ class ReceiptDetailScreen extends ConsumerWidget {
             const SizedBox(height: 2),
             Text(
               inr(receipt.totalPaise, withPaise: true),
-              style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.7,
-                  fontFeatures: Noc.tabular),
+              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w500, letterSpacing: -0.7),
             ),
             const SizedBox(height: 4),
             Text(

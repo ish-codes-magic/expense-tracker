@@ -5,6 +5,7 @@ import 'features/activity_screen.dart';
 import 'features/budgets_screen.dart';
 import 'features/gst_screen.dart';
 import 'features/home_screen.dart';
+import 'features/insights_screen.dart';
 import 'features/not_built_yet_screen.dart';
 import 'features/receipt_detail_screen.dart';
 import 'widgets/app_shell.dart';
@@ -30,7 +31,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/insights',
-          pageBuilder: (context, state) => _tabPage(const NotBuiltYetScreen(title: 'Insights')),
+          pageBuilder: (context, state) => _tabPage(const InsightsScreen()),
         ),
         GoRoute(
           path: '/settings',

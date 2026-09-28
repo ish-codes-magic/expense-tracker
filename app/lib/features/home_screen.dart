@@ -63,22 +63,29 @@ class HomeScreen extends ConsumerWidget {
                 fontSize: 40, fontWeight: FontWeight.w500, letterSpacing: -0.8, height: 1.1),
           ),
           const SizedBox(height: 10),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text(
-              left >= 0 ? '${inr(left)} left of ${inr(budget)}' : '${inr(-left)} over ${inr(budget)}',
-              style: const TextStyle(fontSize: 12, color: Noc.n500),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              child: Text(
+                left >= 0 ? '${inr(left)} left of ${inr(budget)}' : '${inr(-left)} over ${inr(budget)}',
+                style: const TextStyle(fontSize: 12, color: Noc.n500),
+              ),
             ),
+            const SizedBox(width: 8),
             Text('${_percent(spent, budget)}%', style: const TextStyle(fontSize: 12, color: Noc.n500)),
           ]),
           const SizedBox(height: 6),
           GlowBar(fraction: budget == 0 ? 0 : spent / budget, glow: spent >= budget * 0.9),
           if (settings.showGst) ...[
             const SizedBox(height: 8),
-            Row(children: [
-              const Text('GST paid this month ', style: TextStyle(fontSize: 12, color: Noc.n500)),
-              Text(inr(gstOf(thisMonth), withPaise: true),
-                  style: const TextStyle(fontSize: 12, color: Noc.n300, fontFeatures: Noc.tabular)),
-            ]),
+            Text.rich(
+              TextSpan(text: 'GST paid this month ', children: [
+                TextSpan(
+                  text: inr(gstOf(thisMonth), withPaise: true),
+                  style: const TextStyle(color: Noc.n300),
+                ),
+              ]),
+              style: const TextStyle(fontSize: 12, color: Noc.n500),
+            ),
           ],
           const SizedBox(height: 20),
 
