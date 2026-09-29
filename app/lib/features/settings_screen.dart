@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/format.dart';
 import '../data/sample_data.dart';
 import '../services/share_csv.dart';
+import '../state/app_lock.dart';
 import '../state/budgets.dart';
 import '../state/receipts.dart';
 import '../state/settings.dart';
@@ -88,6 +89,16 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 22),
 
+          const _Group(title: 'Privacy'),
+          _SettingsRow(
+            icon: Ph.fingerprint,
+            label: 'App lock',
+            detail: 'Fingerprint, face or phone PIN to open Slip',
+            onTap: () => _setAppLock(ref, !settings.appLock),
+            trailing: NocToggle(value: settings.appLock, onChanged: (value) => _setAppLock(ref, value)),
+          ),
+          const SizedBox(height: 22),
+
           const _Group(title: 'Your data'),
           if (sampleCount > 0)
             _SettingsRow(
@@ -115,8 +126,23 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  static Future<void> _saveSetting(Future<void> Function() save) =>
+  static Future<bool> _saveSetting(Future<void> Function() save) =>
       attempt(save, failure: "Couldn't save the setting");
+
+  /// Turning the lock on first proves the prompt works on this phone, so you
+  /// can't lock yourself out of an app your phone can't unlock.
+  Future<void> _setAppLock(WidgetRef ref, bool on) async {
+    if (on) {
+      final result = await ref.read(appLockProvider.notifier).verify('Turn on app lock');
+      if (!result.verified) {
+        if (result.problem != null) showToast(result.problem!, icon: Ph.warningCircle);
+        return;
+      }
+    }
+    if (await _saveSetting(() => ref.read(settingsProvider.notifier).setAppLock(on))) {
+      showToast(on ? 'App lock on' : 'App lock off');
+    }
+  }
 
   Future<void> _removeSamples(WidgetRef ref) async {
     if (await attempt(() => ref.read(receiptsProvider.notifier).removeSamples(),
@@ -131,7 +157,8 @@ class SettingsScreen extends ConsumerWidget {
       final today = dateOnly(DateTime.now());
       final stamp = '${today.year}-${today.month.toString().padLeft(2, '0')}-'
           '${today.day.toString().padLeft(2, '0')}';
-      await shareReceiptsCsv(receipts, fileName: 'slip-receipts-$stamp.csv', subject: 'Slip receipts');
+      await ref.read(appLockProvider.notifier).whileOutside(() =>
+          shareReceiptsCsv(receipts, fileName: 'slip-receipts-$stamp.csv', subject: 'Slip receipts'));
     } catch (error) {
       showToast("Couldn't export: $error", icon: Ph.warningCircle);
     }

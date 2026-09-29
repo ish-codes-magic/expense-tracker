@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'router.dart';
 import 'theme/nocturne.dart';
+import 'widgets/app_lock_gate.dart';
 import 'widgets/nocturne_widgets.dart';
 
 class SlipApp extends StatelessWidget {
@@ -15,6 +16,7 @@ class SlipApp extends StatelessWidget {
       theme: buildNocturneTheme(),
       routerConfig: router,
       scaffoldMessengerKey: messengerKey,
+      builder: (context, child) => AppLockGate(child: child!),
     );
   }
 }

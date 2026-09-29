@@ -31,6 +31,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
 
   Future<void> setAutoCategorise(bool value) => _save(state.copyWith(autoCategorise: value));
 
+  Future<void> setAppLock(bool value) => _save(state.copyWith(appLock: value));
+
   Future<void> _save(AppSettings next) async {
     await ref.read(slipDatabaseProvider).saveSettings(next);
     state = next;
