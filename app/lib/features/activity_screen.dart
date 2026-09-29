@@ -122,7 +122,13 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                         ]),
                       ),
                       for (final receipt in month.receipts)
-                        ReceiptRow(receipt: receipt, subtitle: _subtitle(receipt, settings.showGst)),
+                        ReceiptRow(
+                          receipt: receipt,
+                          subtitle: '${categoryById(receipt.categoryId).name} · ${shortDate(receipt.date)}',
+                          amountDetail: settings.showGst && receipt.gstPaise > 0
+                              ? 'GST ${inr(receipt.gstPaise, withPaise: true)}'
+                              : null,
+                        ),
                       const SizedBox(height: 16),
                     ],
                   ],
@@ -142,14 +148,6 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       receipt.payment.label,
     ].join(' ').toLowerCase();
     return haystack.contains(_query);
-  }
-
-  static String _subtitle(Receipt receipt, bool showGst) {
-    final parts = [categoryById(receipt.categoryId).name, shortDate(receipt.date)];
-    if (showGst && receipt.gstPaise > 0) {
-      parts.add('GST ${inr(receipt.gstPaise, withPaise: true)}');
-    }
-    return parts.join(' · ');
   }
 
   static List<({DateTime month, List<Receipt> receipts})> _groupByMonth(List<Receipt> receipts) {

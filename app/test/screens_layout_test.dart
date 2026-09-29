@@ -57,6 +57,14 @@ void main() {
         await tester.pump();
 
         expect(tester.takeException(), isNull);
+        if (name == 'Insights') {
+          final segments = find.descendant(
+              of: find.byKey(const Key('share-bar')), matching: find.byType(ColoredBox));
+          expect(segments, findsWidgets);
+          for (final segment in segments.evaluate()) {
+            expect(segment.size!.height, 6, reason: 'share bar segments must be visible');
+          }
+        }
       });
     }
   }
