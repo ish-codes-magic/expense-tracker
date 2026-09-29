@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older. Receipt photos are left out of Google's automatic
+     backup: it stops backing up an app entirely past 25 MB, and photos would
+     soon push the database past that. Also keeps out the scanner's temporary
+     pictures, as the scanner plugin's own rules (which these replace) do. -->
+<full-backup-content>
+    <exclude domain="file" path="receipts/" />
+    <exclude domain="external" path="Pictures/" />
+</full-backup-content>

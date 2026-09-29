@@ -13,6 +13,7 @@ import '../state/settings.dart';
 import '../theme/nocturne.dart';
 import '../theme/phosphor.dart';
 import '../widgets/nocturne_widgets.dart';
+import '../widgets/photo_viewer.dart';
 
 class ReceiptDetailScreen extends ConsumerWidget {
   const ReceiptDetailScreen({super.key, required this.id});
@@ -175,9 +176,12 @@ class _Photo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (path != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.file(File(path!), width: 200, height: 260, fit: BoxFit.cover),
+      return GestureDetector(
+        onTap: () => showReceiptPhoto(context, path!),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.file(File(path!), width: 200, height: 260, fit: BoxFit.cover),
+        ),
       );
     }
     return const SizedBox(

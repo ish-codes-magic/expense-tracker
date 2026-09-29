@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'data/slip_database.dart';
+import 'services/receipt_capture.dart';
 import 'state/database.dart';
 
 Future<void> main() async {
@@ -20,6 +21,8 @@ Future<void> main() async {
   // receipts), so no screen ever has to show a loading state.
   final database = await SlipDatabase.open();
   final startup = await database.load();
+  // Tidy up in the background; nothing waits for it.
+  deleteOrphanPhotos(startup.receipts).ignore();
 
   runApp(ProviderScope(
     overrides: [

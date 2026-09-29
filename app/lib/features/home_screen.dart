@@ -6,12 +6,14 @@ import '../theme/phosphor.dart';
 import '../core/format.dart';
 import '../core/spending.dart';
 import '../data/categories.dart';
+import '../services/receipt_capture.dart';
 import '../state/budgets.dart';
 import '../state/receipts.dart';
 import '../state/settings.dart';
 import '../theme/nocturne.dart';
 import '../widgets/nocturne_widgets.dart';
 import '../widgets/receipt_row.dart';
+import 'capture/start_capture.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -92,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
           Row(children: [
             Expanded(
               child: NocButton(
-                onPressed: () => context.push('/processing'),
+                onPressed: () => startCapture(context, ref, CaptureSource.camera),
                 radius: Noc.radiusLg,
                 padding: const EdgeInsets.all(14),
                 child: const _ActionContent(icon: Ph.camera, label: 'Scan receipt'),
@@ -101,7 +103,7 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: NocButton(
-                onPressed: () => context.push('/processing'),
+                onPressed: () => chooseUpload(context, ref),
                 kind: NocButtonKind.secondary,
                 radius: Noc.radiusLg,
                 padding: const EdgeInsets.all(14),

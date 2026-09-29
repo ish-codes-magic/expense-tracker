@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12 and newer. Cloud backup skips receipt photos for the same
+     25 MB reason; a cable transfer to a new phone has no limit, so it keeps
+     them. The scanner's temporary pictures are skipped in both, as the
+     scanner plugin's own rules (which these replace) do. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="receipts/" />
+        <exclude domain="external" path="Pictures/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="external" path="Pictures/" />
+    </device-transfer>
+</data-extraction-rules>

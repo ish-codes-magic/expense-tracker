@@ -12,6 +12,17 @@ int gstInclusive(int totalPaise, int ratePercent) {
   return totalPaise - (totalPaise * 100 / (100 + ratePercent)).round();
 }
 
+/// The rate whose GST, on this tax-inclusive total, matches [gstPaise] to
+/// within ₹1, checking current slabs before the older 12% and 28%. Null when
+/// none fit, e.g. a bill mixing several rates.
+int? inferGstRate(int totalPaise, int gstPaise) {
+  if (gstPaise == 0) return 0;
+  for (final rate in [...standardGstRates.where((r) => r > 0), 12, 28]) {
+    if ((gstInclusive(totalPaise, rate) - gstPaise).abs() <= 100) return rate;
+  }
+  return null;
+}
+
 final _gstinPattern = RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$');
 const _gstinChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 

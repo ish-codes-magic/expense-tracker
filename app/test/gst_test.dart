@@ -48,6 +48,15 @@ void main() {
     expect(gstInclusive(10000, 0), 0);
   });
 
+  test('inferGstRate finds the rate a typed GST amount implies', () {
+    expect(inferGstRate(52500, 2500), 5);
+    expect(inferGstRate(52500, 2550), 5, reason: 'within ₹1 of rounding');
+    expect(inferGstRate(11800, 1800), 18);
+    expect(inferGstRate(11200, 1200), 12, reason: 'older slabs still recognised');
+    expect(inferGstRate(10000, 0), 0);
+    expect(inferGstRate(10000, 777), isNull, reason: 'mixed rates fit no single slab');
+  });
+
   group('gstComponents', () {
     test('splits same-state GST in half, odd paisa to SGST', () {
       final parts = gstComponents(_receipt(gst: 3049));

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../features/capture/start_capture.dart';
+import '../services/receipt_capture.dart';
 import '../theme/phosphor.dart';
 
 import '../theme/nocturne.dart';
@@ -7,7 +11,7 @@ import 'nocturne_widgets.dart';
 
 /// Scaffold for the tabbed screens, with the design's bottom bar and its
 /// raised Scan button.
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.location, required this.child});
 
   final String location;
@@ -22,7 +26,7 @@ class AppShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: child,
       bottomNavigationBar: DecoratedBox(
@@ -36,7 +40,7 @@ class AppShell extends StatelessWidget {
               child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 _tab(context, '/', 'Home', Ph.house),
                 _tab(context, '/activity', 'Activity', Ph.listBullets),
-                Expanded(child: _ScanTab(onTap: () => context.push('/processing'))),
+                Expanded(child: _ScanTab(onTap: () => startCapture(context, ref, CaptureSource.camera))),
                 _tab(context, '/insights', 'Insights', Ph.chartBar),
                 _tab(context, '/settings', 'Settings', Ph.gear),
               ]),
