@@ -104,9 +104,14 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         ),
         Expanded(
           child: matches.isEmpty
-              ? const Center(
-                  child: Text('Nothing matches.',
-                      style: TextStyle(fontSize: 13, color: Noc.n500)),
+              ? Center(
+                  child: Text(
+                    receipts.isEmpty
+                        ? 'No receipts yet.\nTap Scan to add your first one.'
+                        : 'Nothing matches.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13, color: Noc.n500, height: 1.5),
+                  ),
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),

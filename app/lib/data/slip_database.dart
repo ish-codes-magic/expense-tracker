@@ -7,7 +7,6 @@ import '../core/gst.dart';
 import '../state/settings.dart';
 import 'categories.dart';
 import 'models.dart';
-import 'sample_data.dart';
 
 /// Everything the app needs on launch, loaded once in main() so every screen
 /// can read it straight away.
@@ -29,29 +28,15 @@ class SlipDatabase {
 
   static const _schemaVersion = 1;
 
-  /// Opens (or on first launch, creates) the database. A new database starts
-  /// with the sample receipts so the screens have something to show.
-  static Future<SlipDatabase> open({
-    DatabaseFactory? factory,
-    String? path,
-    bool seedSamples = true,
-  }) async {
+  /// Opens the database, creating it empty on first launch.
+  static Future<SlipDatabase> open({DatabaseFactory? factory, String? path}) async {
     factory ??= databaseFactory;
     path ??= '${await factory.getDatabasesPath()}/slip.db';
     final db = await factory.openDatabase(
       path,
       options: OpenDatabaseOptions(
         version: _schemaVersion,
-        onCreate: (db, version) async {
-          await _createTables(db);
-          if (seedSamples) {
-            final batch = db.batch();
-            for (final receipt in sampleReceipts()) {
-              batch.insert('receipts', _receiptRow(receipt));
-            }
-            await batch.commit(noResult: true);
-          }
-        },
+        onCreate: (db, version) => _createTables(db),
       ),
     );
     return SlipDatabase._(db);

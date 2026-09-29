@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:slip/core/gst.dart';
 import 'package:slip/data/models.dart';
-import 'package:slip/data/sample_data.dart';
 import 'package:slip/data/slip_database.dart';
 import 'package:slip/state/settings.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'support/sample_receipts.dart';
 
 /// Runs the real schema and SQL against SQLite on this computer, using a
 /// fresh file per test so "close the app and open it again" can be checked.
@@ -21,13 +22,12 @@ void main() {
   });
   tearDown(() => dir.deleteSync(recursive: true));
 
-  Future<SlipDatabase> open({bool seed = false}) =>
-      SlipDatabase.open(factory: databaseFactoryFfi, path: path, seedSamples: seed);
+  Future<SlipDatabase> open() => SlipDatabase.open(factory: databaseFactoryFfi, path: path);
 
   /// Closes and reopens, like quitting and relaunching the app.
   Future<StartupData> reopen(SlipDatabase db) async {
     await db.close();
-    final again = await open(seed: true);
+    final again = await open();
     final data = await again.load();
     await again.close();
     return data;
@@ -51,15 +51,19 @@ void main() {
     createdAt: DateTime(2026, 9, 12, 18, 30),
   );
 
-  test('a new database starts with the sample receipts, once', () async {
-    final db = await open(seed: true);
-    final first = await db.load();
-    expect(first.receipts, hasLength(sampleReceipts().length));
-    expect(first.receipts.every(isSampleReceipt), isTrue);
+  test('a new database starts empty, with no made-up receipts', () async {
+    final db = await open();
+    expect((await db.load()).receipts, isEmpty);
+    expect((await reopen(db)).receipts, isEmpty);
+  });
 
-    await db.deleteReceipts(first.receipts);
-    final later = await reopen(db);
-    expect(later.receipts, isEmpty, reason: 'samples must not come back after being removed');
+  test('receipts from an older install that seeded samples can all be removed', () async {
+    final db = await open();
+    for (final receipt in sampleReceipts()) {
+      await db.insertReceipt(receipt);
+    }
+    await db.deleteReceipts(sampleReceipts());
+    expect((await reopen(db)).receipts, isEmpty);
   });
 
   test('a saved receipt survives a restart with every field intact', () async {
