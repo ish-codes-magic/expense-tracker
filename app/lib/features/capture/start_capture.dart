@@ -9,8 +9,8 @@ import '../../theme/nocturne.dart';
 import '../../theme/phosphor.dart';
 import '../../widgets/nocturne_widgets.dart';
 
-/// Scan or import a receipt, then open Review with the photo. Until the
-/// receipt reader exists, the details are typed in by hand on Review.
+/// Scan or import a receipt, then read it on the phone (Processing), which
+/// opens Review with what it found.
 Future<void> startCapture(BuildContext context, WidgetRef ref, CaptureSource source) async {
   final String? photo;
   try {
@@ -24,7 +24,7 @@ Future<void> startCapture(BuildContext context, WidgetRef ref, CaptureSource sou
   }
   if (photo == null || !context.mounted) return;
   ref.read(draftProvider.notifier).set(ReceiptDraft.blank(imagePath: photo));
-  context.push('/review');
+  context.push('/processing');
 }
 
 /// "Upload file" on Home: a saved photo or an e-receipt PDF.

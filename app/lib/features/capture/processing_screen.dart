@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/format.dart';
+import '../../core/receipt_parser.dart';
+import '../../data/models.dart';
+import '../../services/receipt_reader.dart';
 import '../../state/draft.dart';
 import '../../theme/nocturne.dart';
 import '../../theme/phosphor.dart';
@@ -16,9 +21,9 @@ const _steps = [
   'Suggesting a category',
 ];
 
-/// The "Reading receipt" screen: a scan line sweeps the photo while the steps
-/// tick off. For now it hands the Review screen a sample draft on a timer;
-/// the receipt reader will replace the timer with the real result.
+/// "Reading receipt": reads the captured photo on the phone, then opens
+/// Review with whatever the rules found. Each step ticks when that stage has
+/// actually finished.
 class ProcessingScreen extends ConsumerStatefulWidget {
   const ProcessingScreen({super.key});
 
@@ -31,28 +36,70 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
     ..repeat(reverse: true);
   late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 500))
     ..repeat(reverse: true);
-  final _timers = <Timer>[];
+  late final String? _photo = ref.read(draftProvider)?.imagePath;
   int _step = 0;
+  bool _handedOver = false;
+  bool _cancelled = false;
 
   @override
   void initState() {
     super.initState();
-    for (var i = 1; i <= _steps.length; i++) {
-      _timers.add(Timer(Duration(milliseconds: 650 * i), () => setState(() => _step = i)));
-    }
-    _timers.add(Timer(const Duration(milliseconds: 3100), _finish));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _read());
   }
 
-  void _finish() {
-    ref.read(draftProvider.notifier).set(demoDraft());
+  Future<void> _read() async {
+    final photo = _photo;
+    if (photo == null) return _cancel();
+
+    ReceiptDraft draft;
+    try {
+      final rows = await readReceiptRows(photo);
+      if (_cancelled) return;
+      final parsed = parseReceiptText(rows, today: dateOnly(DateTime.now()));
+      // Parsing takes a millisecond; a short beat per step lets you see what
+      // was done without slowing things down.
+      for (var step = 1; step <= _steps.length; step++) {
+        if (!mounted || _cancelled) return;
+        setState(() => _step = step);
+        await Future<void>.delayed(const Duration(milliseconds: 180));
+      }
+      draft = ReceiptDraft(
+        merchant: parsed.merchant ?? '',
+        date: parsed.date ?? dateOnly(DateTime.now()),
+        payment: parsed.payment ?? PaymentMethod.upi,
+        totalPaise: parsed.totalPaise,
+        gstPaise: parsed.gstPaise,
+        gstRate: parsed.gstRate,
+        taxSplit: parsed.taxSplit,
+        categoryId: parsed.categoryId ?? 'food',
+        gstin: parsed.gstin ?? '',
+        imagePath: photo,
+      );
+    } catch (error) {
+      showToast("Couldn't read this one. Fill it in from the photo", icon: Ph.warningCircle);
+      draft = ReceiptDraft.blank(imagePath: photo);
+    }
+    if (!mounted || _cancelled) return;
+    ref.read(draftProvider.notifier).set(draft);
+    _handedOver = true;
     context.pushReplacement('/review');
+  }
+
+  void _cancel() {
+    _cancelled = true;
+    ref.read(draftProvider.notifier).clear();
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/');
+    }
   }
 
   @override
   void dispose() {
-    for (final timer in _timers) {
-      timer.cancel();
-    }
+    // Cancelled or backed out of: the photo isn't going anywhere, so drop it.
+    final photo = _photo;
+    if (!_handedOver && photo != null) File(photo).delete().ignore();
     _sweep.dispose();
     _pulse.dispose();
     super.dispose();
@@ -60,6 +107,7 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
 
   @override
   Widget build(BuildContext context) {
+    final photo = _photo;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -68,7 +116,7 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Row(children: [
-                CircleIconButton(icon: Ph.x, tooltip: 'Cancel', onPressed: () => context.pop()),
+                CircleIconButton(icon: Ph.x, tooltip: 'Cancel', onPressed: _cancel),
                 const Expanded(
                   child: Text('Reading receipt', textAlign: TextAlign.center, style: TextStyle(fontSize: 14)),
                 ),
@@ -80,13 +128,16 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
               width: 220,
               height: 300,
               child: Stack(children: [
-                const Positioned.fill(
-                  child: StripedPaper(
-                    child: Center(
-                      child: Text('Sample receipt',
-                          style: TextStyle(fontSize: 11, color: Noc.n500, fontFamily: 'monospace')),
-                    ),
-                  ),
+                Positioned.fill(
+                  child: photo == null
+                      ? const StripedPaper()
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: ColoredBox(
+                            color: Noc.surface,
+                            child: Image.file(File(photo), fit: BoxFit.contain),
+                          ),
+                        ),
                 ),
                 AnimatedBuilder(
                   animation: _sweep,
@@ -101,11 +152,7 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
                         decoration: BoxDecoration(
                           color: Noc.accent,
                           boxShadow: [
-                            BoxShadow(
-                              color: Noc.accent.withValues(alpha: 0.6),
-                              blurRadius: 18,
-                              spreadRadius: 4,
-                            ),
+                            BoxShadow(color: Noc.accent.withValues(alpha: 0.6), blurRadius: 18, spreadRadius: 4),
                           ],
                         ),
                       ),
@@ -142,20 +189,11 @@ class _StepRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = Icon(
-      done ? Ph.checkCircle : (active ? Ph.circleNotch : Ph.circle),
-      size: 18,
-      color: Noc.accent,
-    );
+    final icon = Icon(done ? Ph.checkCircle : (active ? Ph.circleNotch : Ph.circle), size: 18, color: Noc.accent);
     return Row(children: [
-      if (active)
-        FadeTransition(opacity: Tween(begin: 0.35, end: 1.0).animate(pulse), child: icon)
-      else
-        icon,
+      if (active) FadeTransition(opacity: Tween(begin: 0.35, end: 1.0).animate(pulse), child: icon) else icon,
       const SizedBox(width: 12),
-      Expanded(
-        child: Text(label, style: TextStyle(fontSize: 14, color: done || active ? Noc.text : Noc.n500)),
-      ),
+      Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: done || active ? Noc.text : Noc.n500))),
     ]);
   }
 }

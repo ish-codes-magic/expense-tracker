@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:slip/data/models.dart';
 import 'package:slip/features/activity_screen.dart';
 import 'package:slip/features/budgets_screen.dart';
@@ -59,7 +60,7 @@ void main() {
                     settings: const AppSettings(),
                   )),
                 ],
-                child: MaterialApp(
+                child: MaterialApp.router(
                   // The real theme fetches Inter over the network; tests use the default font.
                   theme: ThemeData.dark(useMaterial3: true),
                   builder: (context, child) => MediaQuery(
@@ -67,7 +68,18 @@ void main() {
                         .copyWith(textScaler: TextScaler.linear(textScale)),
                     child: child!,
                   ),
-                  home: Scaffold(body: screen),
+                  // Real navigation, so a screen that moves on by itself
+                  // (Processing without a photo closes) behaves as in the app.
+                  routerConfig: GoRouter(
+                    initialLocation: '/under-test',
+                    routes: [
+                      GoRoute(path: '/', builder: (context, state) => const SizedBox()),
+                      GoRoute(
+                        path: '/under-test',
+                        builder: (context, state) => Scaffold(body: screen),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
