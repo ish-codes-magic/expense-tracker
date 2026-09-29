@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/format.dart';
 import '../data/sample_data.dart';
+import '../services/ai_reader.dart';
 import '../services/share_csv.dart';
 import '../state/app_lock.dart';
 import '../state/budgets.dart';
@@ -87,6 +88,19 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (value) => _saveSetting(() => notifier.setAutoCategorise(value)),
             ),
           ),
+          if (aiReaderConfigured)
+            _SettingsRow(
+              icon: Ph.sparkle,
+              label: 'Read receipts with AI',
+              detail: settings.aiReading
+                  ? 'Sends the photo to a cheap AI model via OpenRouter. More accurate, reads line items'
+                  : 'Off: receipts are read on this phone only, and photos never leave it',
+              onTap: () => _saveSetting(() => notifier.setAiReading(!settings.aiReading)),
+              trailing: NocToggle(
+                value: settings.aiReading,
+                onChanged: (value) => _saveSetting(() => notifier.setAiReading(value)),
+              ),
+            ),
           const SizedBox(height: 22),
 
           const _Group(title: 'Privacy'),

@@ -7,17 +7,22 @@ class AppSettings {
     this.showGst = true,
     this.autoCategorise = true,
     this.appLock = false,
+    this.aiReading = true,
   });
 
   final bool showGst;
   final bool autoCategorise;
   final bool appLock;
 
-  AppSettings copyWith({bool? showGst, bool? autoCategorise, bool? appLock}) =>
+  /// Send receipt photos to the AI reader (when this build has one).
+  final bool aiReading;
+
+  AppSettings copyWith({bool? showGst, bool? autoCategorise, bool? appLock, bool? aiReading}) =>
       AppSettings(
         showGst: showGst ?? this.showGst,
         autoCategorise: autoCategorise ?? this.autoCategorise,
         appLock: appLock ?? this.appLock,
+        aiReading: aiReading ?? this.aiReading,
       );
 }
 
@@ -32,6 +37,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
   Future<void> setAutoCategorise(bool value) => _save(state.copyWith(autoCategorise: value));
 
   Future<void> setAppLock(bool value) => _save(state.copyWith(appLock: value));
+
+  Future<void> setAiReading(bool value) => _save(state.copyWith(aiReading: value));
 
   Future<void> _save(AppSettings next) async {
     await ref.read(slipDatabaseProvider).saveSettings(next);

@@ -83,7 +83,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         // Typing a GST amount without choosing the split means the common
         // case: a seller in your own state.
         taxSplit: (parsePaise(_gst.text) ?? 0) > 0 && _split == TaxSplit.none ? TaxSplit.cgstSgst : _split,
-        extracted: _initial.extracted,
+        source: _initial.source,
         categoryId: _categoryId,
         gstin: _gstin.text,
         items: _initial.items,
@@ -141,7 +141,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               Expanded(
                 child: Text(
                   draft.extracted
-                      ? _summary(draft.items.length, gstPaise > 0 && showGst, flagged.isEmpty)
+                      ? _summary(draft.source, draft.items.length, gstPaise > 0 && showGst, flagged.isEmpty)
                       : 'Type the details from the photo. Tap it to zoom in on small print.',
                   style: const TextStyle(fontSize: 12, color: Noc.n500, height: 1.6),
                 ),
@@ -335,12 +335,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  static String _summary(int itemCount, bool hasGst, bool allPassed) {
+  static String _summary(DraftSource source, int itemCount, bool hasGst, bool allPassed) {
     final read = [
       if (itemCount > 0) '$itemCount line ${itemCount == 1 ? 'item' : 'items'}',
       if (hasGst) 'a GST split',
     ];
-    final what = read.isEmpty ? 'We read the totals.' : 'We read ${read.join(' and ')}.';
+    final who = source == DraftSource.ai ? 'Read with AI' : 'Read on your phone';
+    final what = read.isEmpty ? '$who.' : '$who, including ${read.join(' and ')}.';
     return allPassed
         ? '$what Everything adds up — give it a quick look and save.'
         : '$what Fields marked "check" didn\'t add up or look misread — tap to fix.';

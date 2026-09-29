@@ -8,22 +8,34 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../core/receipt_parser.dart';
 import '../../data/models.dart';
+import '../../services/ai_reader.dart';
 import '../../services/receipt_reader.dart';
+import '../../state/database.dart';
 import '../../state/draft.dart';
+import '../../state/settings.dart';
 import '../../theme/nocturne.dart';
 import '../../theme/phosphor.dart';
 import '../../widgets/nocturne_widgets.dart';
 
-const _steps = [
+const _phoneSteps = [
   'Reading text',
   'Finding merchant & GSTIN',
   'Extracting total and GST split',
   'Suggesting a category',
 ];
 
-/// "Reading receipt": reads the captured photo on the phone, then opens
-/// Review with whatever the rules found. Each step ticks when that stage has
-/// actually finished.
+const _aiSteps = [
+  'Reading text on your phone',
+  'Reading the details with AI',
+  'Checking totals and GSTIN',
+  'Suggesting a category',
+];
+
+/// "Reading receipt": reads the captured photo, then opens Review with what
+/// was found. With AI reading on, the phone and the AI read at the same time;
+/// the AI's answer comes first and the phone's fills its gaps, so an
+/// unreachable AI just means a phone-only reading. Each step ticks when that
+/// stage has actually finished.
 class ProcessingScreen extends ConsumerStatefulWidget {
   const ProcessingScreen({super.key});
 
@@ -37,6 +49,8 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
   late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 500))
     ..repeat(reverse: true);
   late final String? _photo = ref.read(draftProvider)?.imagePath;
+  late final AiReader? _ai = ref.read(settingsProvider).aiReading ? ref.read(aiReaderProvider) : null;
+  late final List<String> _steps = _ai == null ? _phoneSteps : _aiSteps;
   int _step = 0;
   bool _handedOver = false;
   bool _cancelled = false;
@@ -51,35 +65,59 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> with Ticker
     final photo = _photo;
     if (photo == null) return _cancel();
 
-    ReceiptDraft draft;
-    try {
-      final rows = await readReceiptRows(photo);
-      if (_cancelled) return;
-      final parsed = parseReceiptText(rows, today: dateOnly(DateTime.now()));
-      // Parsing takes a millisecond; a short beat per step lets you see what
-      // was done without slowing things down.
-      for (var step = 1; step <= _steps.length; step++) {
-        if (!mounted || _cancelled) return;
-        setState(() => _step = step);
-        await Future<void>.delayed(const Duration(milliseconds: 180));
-      }
-      draft = ReceiptDraft(
-        merchant: parsed.merchant ?? '',
-        date: parsed.date ?? dateOnly(DateTime.now()),
-        payment: parsed.payment ?? PaymentMethod.upi,
-        totalPaise: parsed.totalPaise,
-        gstPaise: parsed.gstPaise,
-        gstRate: parsed.gstRate,
-        taxSplit: parsed.taxSplit,
-        categoryId: parsed.categoryId ?? 'food',
-        gstin: parsed.gstin ?? '',
-        imagePath: photo,
-      );
-    } catch (error) {
+    // Both readings start now. Each is wrapped so a failure becomes a value
+    // rather than an error nobody is listening for yet.
+    final phoneReading = readReceiptRows(photo).then<ParsedReceipt?>(
+      (rows) => parseReceiptText(rows, today: dateOnly(DateTime.now())),
+      onError: (Object _) => null,
+    );
+    final aiReading = _ai?.read(photo).then<({ParsedReceipt? receipt, String? problem})>(
+      (receipt) => (receipt: receipt, problem: null),
+      onError: (Object error) => (
+        receipt: null,
+        problem: error is AiReaderException ? error.message : 'The AI reader is unavailable',
+      ),
+    );
+
+    final phone = await phoneReading;
+    if (!mounted || _cancelled) return;
+    setState(() => _step = 1);
+
+    final ai = aiReading == null ? null : await aiReading;
+    if (!mounted || _cancelled) return;
+    if (ai?.problem != null) {
+      showToast('${ai!.problem}: read on your phone instead', icon: Ph.warningCircle);
+    }
+
+    // The remaining steps take a millisecond; a short beat each lets you see
+    // what was done without slowing things down.
+    for (var step = 2; step <= _steps.length; step++) {
+      setState(() => _step = step);
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      if (!mounted || _cancelled) return;
+    }
+
+    final ReceiptDraft draft;
+    final read = ai?.receipt == null ? phone : ai!.receipt!.filledFrom(phone ?? const ParsedReceipt());
+    if (read == null) {
       showToast("Couldn't read this one. Fill it in from the photo", icon: Ph.warningCircle);
       draft = ReceiptDraft.blank(imagePath: photo);
+    } else {
+      draft = ReceiptDraft(
+        merchant: read.merchant ?? '',
+        date: read.date ?? dateOnly(DateTime.now()),
+        payment: read.payment ?? PaymentMethod.upi,
+        totalPaise: read.totalPaise,
+        gstPaise: read.gstPaise,
+        gstRate: read.gstRate,
+        taxSplit: read.taxSplit,
+        categoryId: read.categoryId ?? 'food',
+        gstin: read.gstin ?? '',
+        items: read.items,
+        imagePath: photo,
+        source: ai?.receipt == null ? DraftSource.phone : DraftSource.ai,
+      );
     }
-    if (!mounted || _cancelled) return;
     ref.read(draftProvider.notifier).set(draft);
     _handedOver = true;
     context.pushReplacement('/review');

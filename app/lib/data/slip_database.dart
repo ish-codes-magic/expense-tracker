@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 import '../core/gst.dart';
 import '../state/settings.dart';
@@ -99,6 +100,7 @@ class SlipDatabase {
         showGst: flag('show_gst', defaults.showGst),
         autoCategorise: flag('auto_categorise', defaults.autoCategorise),
         appLock: flag('app_lock', defaults.appLock),
+        aiReading: flag('ai_reading', defaults.aiReading),
       ),
     );
   }
@@ -140,12 +142,23 @@ class SlipDatabase {
           'show_gst': settings.showGst,
           'auto_categorise': settings.autoCategorise,
           'app_lock': settings.appLock,
+          'ai_reading': settings.aiReading,
         };
         for (final MapEntry(:key, :value) in values.entries) {
           await txn.insert('settings', {'key': key, 'value': value ? '1' : '0'},
               conflictAlgorithm: ConflictAlgorithm.replace);
         }
       });
+
+  /// A random id for this install, created on first use. It identifies the
+  /// phone to the receipt reader's per-phone limit and nothing else.
+  Future<String> deviceId() async {
+    final rows = await _db.query('settings', where: 'key = ?', whereArgs: ['device_id']);
+    if (rows.isNotEmpty) return rows.single['value'] as String;
+    final id = const Uuid().v4();
+    await _db.insert('settings', {'key': 'device_id', 'value': id});
+    return id;
+  }
 
   Future<void> close() => _db.close();
 

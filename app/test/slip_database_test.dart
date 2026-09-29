@@ -109,6 +109,16 @@ void main() {
     expect((await reopen(db)).receipts, isEmpty);
   });
 
+  test('this install keeps the same random id across restarts', () async {
+    final db = await open();
+    final id = await db.deviceId();
+    expect(id, matches(RegExp(r'^[0-9a-f-]{36}$')));
+    await db.close();
+    final again = await open();
+    expect(await again.deviceId(), id);
+    await again.close();
+  });
+
   test('budgets and settings survive a restart; unset ones use defaults', () async {
     final db = await open();
     final fresh = await db.load();
@@ -116,12 +126,13 @@ void main() {
     expect(fresh.settings.showGst, isTrue);
 
     await db.saveBudgets({...fresh.budgets, 'food': 750000});
-    await db.saveSettings(const AppSettings(showGst: false, autoCategorise: false));
+    await db.saveSettings(const AppSettings(showGst: false, autoCategorise: false, aiReading: false));
     final later = await reopen(db);
 
     expect(later.budgets['food'], 750000);
     expect(later.budgets['groceries'], 800000);
     expect(later.settings.showGst, isFalse);
     expect(later.settings.autoCategorise, isFalse);
+    expect(later.settings.aiReading, isFalse);
   });
 }

@@ -14,6 +14,7 @@ class ParsedReceipt {
     this.gstin,
     this.payment,
     this.categoryId,
+    this.items = const [],
   });
 
   final String? merchant;
@@ -27,6 +28,33 @@ class ParsedReceipt {
   final String? gstin;
   final PaymentMethod? payment;
   final String? categoryId;
+  final List<LineItem> items;
+
+  /// This reading, with gaps filled from [other]. The amounts come as a set
+  /// (total, GST, rate and split together) so a total from one reading is
+  /// never paired with GST from the other. A GSTIN that passes its check
+  /// digit beats one that doesn't.
+  ParsedReceipt filledFrom(ParsedReceipt other) {
+    final amountsHere = totalPaise != null;
+    String? bestGstin() {
+      if (gstin != null && isValidGstin(gstin!)) return gstin;
+      if (other.gstin != null && isValidGstin(other.gstin!)) return other.gstin;
+      return gstin ?? other.gstin;
+    }
+
+    return ParsedReceipt(
+      merchant: merchant ?? other.merchant,
+      date: date ?? other.date,
+      totalPaise: amountsHere ? totalPaise : other.totalPaise,
+      gstPaise: amountsHere ? gstPaise : other.gstPaise,
+      gstRate: amountsHere ? gstRate : other.gstRate,
+      taxSplit: amountsHere ? taxSplit : other.taxSplit,
+      gstin: bestGstin(),
+      payment: payment ?? other.payment,
+      categoryId: categoryId ?? other.categoryId,
+      items: items.isNotEmpty ? items : other.items,
+    );
+  }
 }
 
 /// A piece of recognised text and where it sits on the photo.
