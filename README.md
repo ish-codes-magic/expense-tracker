@@ -1,22 +1,40 @@
-# Expense Tracker
+# Slip
 
-A simple expense tracking application.
+Receipt tracker for India: scan a bill, check the merchant, date, total,
+GST split and category, save it. Budgets, GST summaries and insights come
+from the receipts. Android, built with Flutter; data stays on the phone.
 
-## Getting Started
+## Two editions
 
-This project is currently in initial setup phase.
+| APK | App name | What it does |
+|---|---|---|
+| `Slip-AI-<version>.apk` | Slip | Reads receipts with a cheap AI model via the reader in `worker/`, with on-phone reading as fallback |
+| `Slip-Free-<version>.apk` | Slip Free | Keeps the photo; every field is typed in by hand; nothing leaves the phone |
 
-## Features
+Both can be installed on one phone at the same time.
 
-- (Coming soon)
+## Building
 
-## Installation
+Needs Flutter and the Android SDK. `app/secrets.json` (see
+`app/secrets.example.json`) holds the reader's address and app token for
+the AI edition; it is git-ignored.
 
-(Coming soon)
+```
+powershell -File tool\Build-Apks.ps1      # both editions -> dist/
+cd app && flutter test                    # app tests
+cd worker && npm test                     # reader tests
+```
 
-## Usage
+Running on a phone during development needs a flavor:
+`flutter run --flavor ai --dart-define-from-file=secrets.json` or
+`flutter run --flavor free --dart-define=SLIP_EDITION=free`.
 
-(Coming soon)
+## The reader (`worker/`)
+
+A Cloudflare Worker that holds the OpenRouter key. The app posts a photo;
+the Worker asks a vision model for the receipt's fields, checks them and
+returns them. `GET /usage` reports what it has spent. Deploy with
+`npx wrangler deploy`; secrets with `npx wrangler secret put`.
 
 ## License
 

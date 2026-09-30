@@ -10,3 +10,6 @@ app/android/app/src/main/java/io/flutter/plugins/
 
 # Receipt reader address and app token, passed with --dart-define-from-file.
 app/secrets.json
+
+# Built APKs.
+dist/

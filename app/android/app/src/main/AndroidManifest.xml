@@ -5,7 +5,7 @@
     <!-- The AI receipt reader and the Inter font download. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="Slip"
+        android:label="@string/app_name"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         tools:replace="android:fullBackupContent,android:dataExtractionRules"

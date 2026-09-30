@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/edition.dart';
 import '../core/format.dart';
 import '../data/sample_data.dart';
 import '../services/ai_reader.dart';
@@ -45,9 +46,13 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Stored on this phone', style: TextStyle(fontSize: 14)),
                   Text(
-                    '$receiptCount ${receiptCount == 1 ? 'receipt' : 'receipts'} · no account needed',
+                    Edition.current == Edition.free ? 'Slip Free · stored on this phone' : 'Slip · stored on this phone',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  Text(
+                    '$receiptCount ${receiptCount == 1 ? 'receipt' : 'receipts'} · '
+                    '${Edition.current == Edition.free ? 'typed in by hand, nothing leaves the phone' : 'no account needed'}',
                     style: const TextStyle(fontSize: 11.5, color: Noc.n500),
                   ),
                 ]),

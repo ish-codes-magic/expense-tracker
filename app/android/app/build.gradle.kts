@@ -29,6 +29,23 @@ android {
         versionName = flutter.versionName
     }
 
+    // Two apps from one codebase, installable side by side:
+    //   ai   -> "Slip"      com.slipapp.slip       reads receipts with AI
+    //   free -> "Slip Free" com.slipapp.slip.free  everything typed by hand
+    // Build with --flavor and the matching --dart-define=SLIP_EDITION (see tool/).
+    flavorDimensions += "edition"
+    productFlavors {
+        create("ai") {
+            dimension = "edition"
+            resValue("string", "app_name", "Slip")
+        }
+        create("free") {
+            dimension = "edition"
+            applicationIdSuffix = ".free"
+            resValue("string", "app_name", "Slip Free")
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
