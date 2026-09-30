@@ -84,7 +84,11 @@ export default {
         .catch((error: unknown) => console.log('ledger write failed', String(error))),
     );
 
-    if (!upstream.ok || !result) return reply({ error: 'reader_failed' }, 502);
+    if (!upstream.ok || !result) {
+      // OpenRouter's own message (a key cap, a data-policy mismatch, an
+      // outage) tells the operator what to fix.
+      return reply({ error: 'reader_failed', upstreamStatus: upstream.status, detail: result?.error?.message }, 502);
+    }
     const receipt = normalize(parseJsonObject(result.choices?.[0]?.message?.content));
     if (!receipt) return reply({ error: 'unreadable' }, 422);
     return reply({ receipt, model: result.model });
