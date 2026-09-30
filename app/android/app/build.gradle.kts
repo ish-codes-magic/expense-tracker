@@ -33,6 +33,9 @@ android {
     //   ai   -> "Slip"      com.slipapp.slip       reads receipts with AI
     //   free -> "Slip Free" com.slipapp.slip.free  everything typed by hand
     // Build with --flavor and the matching --dart-define=SLIP_EDITION (see tool/).
+    buildFeatures {
+        resValues = true // app_name is set per flavor below
+    }
     flavorDimensions += "edition"
     productFlavors {
         create("ai") {
@@ -51,6 +54,7 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
