@@ -1,0 +1,27 @@
+{
+  // Slip's receipt reader. Secrets (OPENROUTER_API_KEY, APP_TOKEN) are set
+  // with `wrangler secret put`, never written in this file.
+  "name": "slip-reader",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "vars": {
+    // Cheap vision model; change here and redeploy to switch, no app update.
+    "MODEL": "qwen/qwen3.7-flash"
+  },
+  "ratelimits": [
+    {
+      "name": "PER_DEVICE",
+      "namespace_id": "1001",
+      "simple": { "limit": 6, "period": 60 }
+    }
+  ],
+  "d1_databases": [
+    {
+      // Ledger of reads: cost, tokens, timing. Free tier; see migrations/.
+      "binding": "DB",
+      "database_name": "slip-reader",
+      "database_id": "eaae19e3-acaa-478f-a6f2-1acdec91c418"
+    }
+  ],
+  "observability": { "enabled": true }
+}

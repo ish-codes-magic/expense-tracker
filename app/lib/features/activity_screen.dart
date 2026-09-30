@@ -104,9 +104,14 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         ),
         Expanded(
           child: matches.isEmpty
-              ? const Center(
-                  child: Text('Nothing matches.',
-                      style: TextStyle(fontSize: 13, color: Noc.n500)),
+              ? Center(
+                  child: Text(
+                    receipts.isEmpty
+                        ? 'No receipts yet.\nTap Scan to add your first one.'
+                        : 'Nothing matches.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13, color: Noc.n500, height: 1.5),
+                  ),
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
@@ -122,7 +127,13 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                         ]),
                       ),
                       for (final receipt in month.receipts)
-                        ReceiptRow(receipt: receipt, subtitle: _subtitle(receipt, settings.showGst)),
+                        ReceiptRow(
+                          receipt: receipt,
+                          subtitle: '${categoryById(receipt.categoryId).name} · ${shortDate(receipt.date)}',
+                          amountDetail: settings.showGst && receipt.gstPaise > 0
+                              ? 'GST ${inr(receipt.gstPaise, withPaise: true)}'
+                              : null,
+                        ),
                       const SizedBox(height: 16),
                     ],
                   ],
@@ -142,14 +153,6 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       receipt.payment.label,
     ].join(' ').toLowerCase();
     return haystack.contains(_query);
-  }
-
-  static String _subtitle(Receipt receipt, bool showGst) {
-    final parts = [categoryById(receipt.categoryId).name, shortDate(receipt.date)];
-    if (showGst && receipt.gstPaise > 0) {
-      parts.add('GST ${inr(receipt.gstPaise, withPaise: true)}');
-    }
-    return parts.join(' · ');
   }
 
   static List<({DateTime month, List<Receipt> receipts})> _groupByMonth(List<Receipt> receipts) {

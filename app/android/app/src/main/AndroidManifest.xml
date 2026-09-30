@@ -1,6 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- App lock: fingerprint, face or phone PIN via the system prompt. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- The AI receipt reader and the Inter font download. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="slip"
+        android:label="Slip"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        tools:replace="android:fullBackupContent,android:dataExtractionRules"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

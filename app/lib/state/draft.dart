@@ -18,7 +18,22 @@ class ReceiptDraft {
     this.gstin = '',
     this.items = const [],
     this.imagePath,
+    this.source = DraftSource.phone,
   });
+
+  /// A photo waiting for the details to be typed in by hand.
+  ReceiptDraft.blank({required String this.imagePath})
+      : merchant = '',
+        date = dateOnly(DateTime.now()),
+        payment = PaymentMethod.upi,
+        totalPaise = null,
+        gstPaise = null,
+        gstRate = null,
+        taxSplit = TaxSplit.none,
+        categoryId = 'food',
+        gstin = '',
+        items = const [],
+        source = DraftSource.manual;
 
   final String merchant;
   final DateTime date;
@@ -31,7 +46,16 @@ class ReceiptDraft {
   final String gstin;
   final List<LineItem> items;
   final String? imagePath;
+
+  final DraftSource source;
+
+  /// Whether the values were read from the receipt (and so worth checking)
+  /// rather than left for the user to type.
+  bool get extracted => source != DraftSource.manual;
 }
+
+/// Who filled in a draft: nobody yet, the on-device reader, or the AI.
+enum DraftSource { manual, phone, ai }
 
 enum DraftField { merchant, date, total, gst, gstin }
 

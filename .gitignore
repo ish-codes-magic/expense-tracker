@@ -7,3 +7,6 @@ app/android/local.properties
 app/android/app/src/main/java/io/flutter/plugins/
 *.iml
 .idea/
+
+# Receipt reader address and app token, passed with --dart-define-from-file.
+app/secrets.json

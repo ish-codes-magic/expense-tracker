@@ -7,6 +7,7 @@ import '../core/gst_export.dart';
 import '../core/spending.dart';
 import '../data/models.dart';
 import '../services/share_csv.dart';
+import '../state/app_lock.dart';
 import '../state/receipts.dart';
 import '../theme/nocturne.dart';
 import '../theme/phosphor.dart';
@@ -163,11 +164,11 @@ class _GstScreenState extends ConsumerState<GstScreen> {
   Future<void> _export(List<Receipt> receipts, String periodLabel, String fileSuffix) async {
     setState(() => _exporting = true);
     try {
-      await shareReceiptsCsv(
-        receipts,
-        fileName: 'slip-gst-$fileSuffix.csv',
-        subject: 'GST paid · $periodLabel',
-      );
+      await ref.read(appLockProvider.notifier).whileOutside(() => shareReceiptsCsv(
+            receipts,
+            fileName: 'slip-gst-$fileSuffix.csv',
+            subject: 'GST paid · $periodLabel',
+          ));
     } catch (error) {
       showToast("Couldn't export: $error", icon: Ph.warningCircle);
     } finally {

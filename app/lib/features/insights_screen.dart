@@ -230,7 +230,7 @@ class _MonthlyColumns extends StatelessWidget {
 /// Part-to-whole bar. Segments follow chart-slot order, not size, so the
 /// colours that sit next to each other are the ones checked as distinguishable.
 class _ShareBar extends StatelessWidget {
-  const _ShareBar({required this.shares});
+  const _ShareBar({required this.shares}) : super(key: const Key('share-bar'));
 
   final List<_CategoryShare> shares;
 
@@ -239,7 +239,9 @@ class _ShareBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(3),
         child: SizedBox(
           height: 6,
-          child: Row(children: [
+          // Stretch, or the segments (which have no height of their own) are
+          // laid out 0px tall and the bar disappears.
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             for (var i = 0; i < shares.length; i++) ...[
               if (i > 0) const SizedBox(width: 2),
               Expanded(

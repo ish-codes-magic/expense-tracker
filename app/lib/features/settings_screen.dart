@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/format.dart';
+import '../data/sample_data.dart';
+import '../services/ai_reader.dart';
 import '../services/share_csv.dart';
+import '../state/app_lock.dart';
 import '../state/budgets.dart';
 import '../state/receipts.dart';
 import '../state/settings.dart';
@@ -18,7 +21,9 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
-    final receiptCount = ref.watch(receiptsProvider).length;
+    final receipts = ref.watch(receiptsProvider);
+    final receiptCount = receipts.length;
+    final sampleCount = receipts.where(isSampleReceipt).length;
     final monthlyBudget = totalBudget(ref.watch(budgetsProvider));
 
     return SafeArea(
@@ -57,8 +62,11 @@ class SettingsScreen extends ConsumerWidget {
             icon: Ph.receipt,
             label: 'Track GST',
             detail: 'Tax splits, rates and the GST summary',
-            onTap: notifier.toggleShowGst,
-            trailing: NocToggle(value: settings.showGst, onChanged: (_) => notifier.toggleShowGst()),
+            onTap: () => _saveSetting(() => notifier.setShowGst(!settings.showGst)),
+            trailing: NocToggle(
+              value: settings.showGst,
+              onChanged: (value) => _saveSetting(() => notifier.setShowGst(value)),
+            ),
           ),
           _SettingsRow(
             icon: Ph.wallet,
@@ -74,15 +82,45 @@ class SettingsScreen extends ConsumerWidget {
             icon: Ph.sparkle,
             label: 'Auto-categorise',
             detail: 'Reuse the category you last picked for a merchant',
-            onTap: notifier.toggleAutoCategorise,
+            onTap: () => _saveSetting(() => notifier.setAutoCategorise(!settings.autoCategorise)),
             trailing: NocToggle(
               value: settings.autoCategorise,
-              onChanged: (_) => notifier.toggleAutoCategorise(),
+              onChanged: (value) => _saveSetting(() => notifier.setAutoCategorise(value)),
             ),
+          ),
+          if (aiReaderConfigured)
+            _SettingsRow(
+              icon: Ph.sparkle,
+              label: 'Read receipts with AI',
+              detail: settings.aiReading
+                  ? 'Sends the photo to a cheap AI model via OpenRouter. More accurate, reads line items'
+                  : 'Off: receipts are read on this phone only, and photos never leave it',
+              onTap: () => _saveSetting(() => notifier.setAiReading(!settings.aiReading)),
+              trailing: NocToggle(
+                value: settings.aiReading,
+                onChanged: (value) => _saveSetting(() => notifier.setAiReading(value)),
+              ),
+            ),
+          const SizedBox(height: 22),
+
+          const _Group(title: 'Privacy'),
+          _SettingsRow(
+            icon: Ph.fingerprint,
+            label: 'App lock',
+            detail: 'Fingerprint, face or phone PIN to open Slip',
+            onTap: () => _setAppLock(ref, !settings.appLock),
+            trailing: NocToggle(value: settings.appLock, onChanged: (value) => _setAppLock(ref, value)),
           ),
           const SizedBox(height: 22),
 
           const _Group(title: 'Your data'),
+          if (sampleCount > 0)
+            _SettingsRow(
+              icon: Ph.sparkle,
+              label: 'Remove sample receipts',
+              detail: 'The $sampleCount demo receipts added on first launch',
+              onTap: () => _removeSamples(ref),
+            ),
           _SettingsRow(
             icon: Ph.export,
             label: 'Export all receipts',
@@ -102,13 +140,39 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  static Future<bool> _saveSetting(Future<void> Function() save) =>
+      attempt(save, failure: "Couldn't save the setting");
+
+  /// Turning the lock on first proves the prompt works on this phone, so you
+  /// can't lock yourself out of an app your phone can't unlock.
+  Future<void> _setAppLock(WidgetRef ref, bool on) async {
+    if (on) {
+      final result = await ref.read(appLockProvider.notifier).verify('Turn on app lock');
+      if (!result.verified) {
+        if (result.problem != null) showToast(result.problem!, icon: Ph.warningCircle);
+        return;
+      }
+    }
+    if (await _saveSetting(() => ref.read(settingsProvider.notifier).setAppLock(on))) {
+      showToast(on ? 'App lock on' : 'App lock off');
+    }
+  }
+
+  Future<void> _removeSamples(WidgetRef ref) async {
+    if (await attempt(() => ref.read(receiptsProvider.notifier).removeSamples(),
+        failure: "Couldn't remove the samples")) {
+      showToast('Sample receipts removed');
+    }
+  }
+
   Future<void> _exportAll(WidgetRef ref) async {
     final receipts = ref.read(receiptsProvider);
     try {
       final today = dateOnly(DateTime.now());
       final stamp = '${today.year}-${today.month.toString().padLeft(2, '0')}-'
           '${today.day.toString().padLeft(2, '0')}';
-      await shareReceiptsCsv(receipts, fileName: 'slip-receipts-$stamp.csv', subject: 'Slip receipts');
+      await ref.read(appLockProvider.notifier).whileOutside(() =>
+          shareReceiptsCsv(receipts, fileName: 'slip-receipts-$stamp.csv', subject: 'Slip receipts'));
     } catch (error) {
       showToast("Couldn't export: $error", icon: Ph.warningCircle);
     }
@@ -120,7 +184,7 @@ class SettingsScreen extends ConsumerWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete all receipts?', style: TextStyle(fontSize: 20)),
         content: Text(
-          'All $count receipts will be removed from this phone. Export them first if you '
+          'All $count receipts and their photos will be erased from this phone. Export them first if you '
           'want a copy. This cannot be undone.',
           style: const TextStyle(fontSize: 14, color: Noc.n300),
         ),
@@ -138,8 +202,10 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    ref.read(receiptsProvider.notifier).clear();
-    showToast('All receipts deleted');
+    if (await attempt(() => ref.read(receiptsProvider.notifier).clear(),
+        failure: "Couldn't delete the receipts")) {
+      showToast('All receipts deleted');
+    }
   }
 }
 

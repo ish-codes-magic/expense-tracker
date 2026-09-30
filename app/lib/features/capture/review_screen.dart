@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import '../../state/settings.dart';
 import '../../theme/nocturne.dart';
 import '../../theme/phosphor.dart';
 import '../../widgets/nocturne_widgets.dart';
+import '../../widgets/photo_viewer.dart';
 
 /// Shows what was read from the receipt so the user can correct it before
 /// saving. The on-device checks from [fieldsToCheck] decide which fields get
@@ -40,21 +42,30 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   late TaxSplit _split = _initial.taxSplit;
   late String _categoryId = _initial.categoryId;
   bool _categoryRemembered = false;
+  bool _categoryPicked = false;
+  bool _saved = false;
 
   @override
   void initState() {
     super.initState();
-    if (ref.read(settingsProvider).autoCategorise) {
-      final remembered = lastCategoryFor(ref.read(receiptsProvider), _initial.merchant);
-      if (remembered != null) {
-        _categoryId = remembered;
-        _categoryRemembered = true;
-      }
-    }
+    _rememberCategory(_initial.merchant);
+  }
+
+  /// Auto-categorise: a merchant seen before gets last time's category,
+  /// unless the user has already picked one on this screen.
+  void _rememberCategory(String merchant) {
+    if (_categoryPicked || !ref.read(settingsProvider).autoCategorise) return;
+    final remembered = lastCategoryFor(ref.read(receiptsProvider), merchant);
+    if (remembered != null) _categoryId = remembered;
+    _categoryRemembered = remembered != null;
   }
 
   @override
   void dispose() {
+    // Leaving without saving (Discard, back arrow or back gesture) drops the
+    // photo too, so unsaved scans don't pile up on the phone.
+    final photo = _initial.imagePath;
+    if (!_saved && photo != null) File(photo).delete().ignore();
     _merchant.dispose();
     _total.dispose();
     _gst.dispose();
@@ -69,7 +80,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         totalPaise: parsePaise(_total.text),
         gstPaise: parsePaise(_gst.text),
         gstRate: _rate,
-        taxSplit: _split,
+        // Typing a GST amount without choosing the split means the common
+        // case: a seller in your own state.
+        taxSplit: (parsePaise(_gst.text) ?? 0) > 0 && _split == TaxSplit.none ? TaxSplit.cgstSgst : _split,
+        source: _initial.source,
         categoryId: _categoryId,
         gstin: _gstin.text,
         items: _initial.items,
@@ -82,7 +96,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final today = dateOnly(DateTime.now());
     final draft = _current;
     final flagged = fieldsToCheck(draft, today: today)
-      ..removeAll(showGst ? const <DraftField>{} : {DraftField.gst, DraftField.gstin});
+      ..removeAll(showGst ? const <DraftField>{} : {DraftField.gst, DraftField.gstin})
+      // Empty boxes on a photo you're filling in yourself aren't mistakes;
+      // Save still insists on a merchant and total.
+      ..removeAll(draft.extracted ? const <DraftField>{} : {DraftField.merchant, DraftField.total});
     final gstPaise = draft.gstPaise ?? 0;
 
     // Offer the current slabs, plus an older rate if this bill used one.
@@ -108,7 +125,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     borderRadius: BorderRadius.circular(Noc.radiusMd * 0.75),
                   ),
                   child: Text(
-                    flagged.isEmpty ? 'All checks passed' : '${flagged.length} to check',
+                    flagged.isNotEmpty
+                        ? '${flagged.length} to check'
+                        : (draft.extracted ? 'All checks passed' : 'Manual entry'),
                     style: const TextStyle(fontSize: 11, color: Noc.a100),
                   ),
                 ),
@@ -117,11 +136,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             const SizedBox(height: 20),
 
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(width: 72, height: 96, child: StripedPaper(stripe: 6, radius: 8)),
+              _Thumbnail(path: draft.imagePath),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  _summary(draft.items.length, gstPaise > 0 && showGst, flagged.isEmpty),
+                  draft.extracted
+                      ? _summary(draft.source, draft.items.length, gstPaise > 0 && showGst, flagged.isEmpty)
+                      : 'Type the details from the photo. Tap it to zoom in on small print.',
                   style: const TextStyle(fontSize: 12, color: Noc.n500, height: 1.6),
                 ),
               ),
@@ -134,7 +155,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               child: TextField(
                 controller: _merchant,
                 textCapitalization: TextCapitalization.words,
-                onChanged: (_) => setState(() {}),
+                onChanged: (value) => setState(() => _rememberCategory(value)),
                 decoration: _decoration(flagged.contains(DraftField.merchant)),
               ),
             ),
@@ -221,18 +242,18 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 Wrap(spacing: 6, runSpacing: 6, children: [
                   NocChip(
                     label: 'CGST + SGST',
-                    selected: _split == TaxSplit.cgstSgst,
+                    selected: draft.taxSplit == TaxSplit.cgstSgst,
                     onTap: () => setState(() => _split = TaxSplit.cgstSgst),
                   ),
                   NocChip(
                     label: 'IGST',
-                    selected: _split == TaxSplit.igst,
+                    selected: draft.taxSplit == TaxSplit.igst,
                     onTap: () => setState(() => _split = TaxSplit.igst),
                   ),
                 ]),
                 const SizedBox(height: 6),
                 Text(
-                  _split == TaxSplit.igst
+                  draft.taxSplit == TaxSplit.igst
                       ? 'IGST ${inr(gstPaise, withPaise: true)} · seller in another state'
                       : 'CGST ${inr(gstPaise ~/ 2, withPaise: true)} + '
                           'SGST ${inr(gstPaise - gstPaise ~/ 2, withPaise: true)} · seller in your state',
@@ -271,6 +292,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     onTap: () => setState(() {
                       _categoryId = category.id;
                       _categoryRemembered = false;
+                      _categoryPicked = true;
                     }),
                   ),
               ]),
@@ -313,12 +335,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  static String _summary(int itemCount, bool hasGst, bool allPassed) {
+  static String _summary(DraftSource source, int itemCount, bool hasGst, bool allPassed) {
     final read = [
       if (itemCount > 0) '$itemCount line ${itemCount == 1 ? 'item' : 'items'}',
       if (hasGst) 'a GST split',
     ];
-    final what = read.isEmpty ? 'We read the totals.' : 'We read ${read.join(' and ')}.';
+    final who = source == DraftSource.ai ? 'Read with AI' : 'Read on your phone';
+    final what = read.isEmpty ? '$who.' : '$who, including ${read.join(' and ')}.';
     return allPassed
         ? '$what Everything adds up — give it a quick look and save.'
         : '$what Fields marked "check" didn\'t add up or look misread — tap to fix.';
@@ -358,7 +381,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     if (picked != null) setState(() => _date = dateOnly(picked));
   }
 
-  void _save() {
+  Future<void> _save() async {
     final draft = _current;
     final total = draft.totalPaise;
     if (draft.merchant.trim().isEmpty) {
@@ -378,7 +401,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       date: dateOnly(draft.date),
       totalPaise: total,
       gstPaise: gst,
-      gstRate: gst == 0 ? 0 : draft.gstRate,
+      gstRate: gst == 0 ? 0 : draft.gstRate ?? inferGstRate(total, gst),
       taxSplit: gst == 0 ? TaxSplit.none : draft.taxSplit,
       payment: draft.payment,
       gstin: gstin.isEmpty ? null : gstin,
@@ -386,7 +409,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       imagePath: draft.imagePath,
       createdAt: DateTime.now(),
     );
-    ref.read(receiptsProvider.notifier).add(receipt);
+    final saved = await attempt(() => ref.read(receiptsProvider.notifier).add(receipt),
+        failure: "Couldn't save the receipt");
+    if (!saved || !mounted) return;
+    _saved = true;
     ref.read(draftProvider.notifier).clear();
     context.go('/');
     showToast('Saved ${inr(total)} to ${categoryById(draft.categoryId).name}');
@@ -399,6 +425,31 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     } else {
       context.go('/');
     }
+  }
+}
+
+class _Thumbnail extends StatelessWidget {
+  const _Thumbnail({required this.path});
+
+  final String? path;
+
+  @override
+  Widget build(BuildContext context) {
+    const size = Size(72, 96);
+    if (path == null) {
+      return SizedBox.fromSize(size: size, child: const StripedPaper(stripe: 6, radius: 8));
+    }
+    return Semantics(
+      button: true,
+      label: 'View receipt photo',
+      child: GestureDetector(
+        onTap: () => showReceiptPhoto(context, path!),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(File(path!), width: size.width, height: size.height, fit: BoxFit.cover),
+        ),
+      ),
+    );
   }
 }
 

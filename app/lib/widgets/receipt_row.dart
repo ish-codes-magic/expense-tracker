@@ -8,10 +8,14 @@ import '../theme/nocturne.dart';
 import 'nocturne_widgets.dart';
 
 class ReceiptRow extends StatelessWidget {
-  const ReceiptRow({super.key, required this.receipt, required this.subtitle});
+  const ReceiptRow({super.key, required this.receipt, required this.subtitle, this.amountDetail});
 
   final Receipt receipt;
   final String subtitle;
+
+  /// A short line under the amount, e.g. the GST, where it has room even
+  /// with large system text.
+  final String? amountDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +31,15 @@ class ReceiptRow extends StatelessWidget {
           ]),
         ),
         const SizedBox(width: 8),
-        Text(
-          inr(receipt.totalPaise, withPaise: true),
-          style: const TextStyle(fontSize: 14, fontFeatures: Noc.tabular),
-        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(
+            inr(receipt.totalPaise, withPaise: true),
+            style: const TextStyle(fontSize: 14, fontFeatures: Noc.tabular),
+          ),
+          if (amountDetail != null)
+            Text(amountDetail!,
+                style: const TextStyle(fontSize: 11.5, color: Noc.n500, fontFeatures: Noc.tabular)),
+        ]),
       ]),
     );
   }
