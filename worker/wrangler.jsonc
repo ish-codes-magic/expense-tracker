@@ -15,5 +15,13 @@
       "simple": { "limit": 6, "period": 60 }
     }
   ],
+  "d1_databases": [
+    {
+      // Ledger of reads: cost, tokens, timing. Free tier; see migrations/.
+      "binding": "DB",
+      "database_name": "slip-reader",
+      "database_id": "eaae19e3-acaa-478f-a6f2-1acdec91c418"
+    }
+  ],
   "observability": { "enabled": true }
 }
