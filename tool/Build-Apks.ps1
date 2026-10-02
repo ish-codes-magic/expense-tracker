@@ -4,7 +4,7 @@
 # Run from anywhere:  powershell -File tool\Build-Apks.ps1
 $ErrorActionPreference = 'Stop'
 Set-Location "$PSScriptRoot\..\app"
-$version = (Select-String '^version:\s*(\S+)' pubspec.yaml).Matches[0].Groups[1].Value
+$version = (Select-String '^version:\s*([^+\s]+)' pubspec.yaml).Matches[0].Groups[1].Value
 $dist = "$PSScriptRoot\..\dist"
 New-Item -ItemType Directory -Force $dist | Out-Null
 
